@@ -1,4 +1,7 @@
-//Arduino Project Group 1
+// Chady Doumit
+// 08/07/2023
+// Arduino Project
+
 
 #include <LiquidCrystal.h> //LCD Screen Library
 
