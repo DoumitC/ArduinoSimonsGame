@@ -1,0 +1,426 @@
+//Arduino Project Group 1
+
+#include <LiquidCrystal.h> //LCD Screen Library
+
+#define BUZZER_PIN  19
+
+// constants won't change. They're used here to set pin numbers:
+const int buttonPin = 17;  // the number of the pushbutton pin
+const int buttonPin2 = 16;
+const int buttonPin3 = 15;
+const int buttonPin4 = 14;
+
+const int ledPin = 2;    // the number of the LED pin
+const int ledPin2 = 3;
+const int ledPin3 = 4;
+const int ledPin4 = 5;
+
+// initialize the library by associating any needed LCD interface pin
+// with the arduino pin number it is connected to
+const int rs = 12, en = 11, d4 = 10, d5 = 9, d6 = 8, d7 = 7;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+const int ReleaseDelay = 200;//Minimum Amount light turns on when button is pressed
+
+// variables will change:
+int buttonState = 0;  // variable for reading the pushbutton status.
+int buttonState2 = 0;
+int buttonState3 = 0;
+int buttonState4 = 0;
+
+int randomNumber = 0;
+int ButtonClickCounter = 0;
+
+//Configures default light on light off time for LED.
+int LightOnDelayTime = 2000;
+int LightOffDelayTime = 1000;
+
+int waitTime = 10000; //Configures Default wait time for user to input pattern.
+int Level = 1;  //Configures default level (level 1).
+
+int Pattern[100]; //Creates a Pattern array with a limit of a 100 items.
+int PlayerPattern[100]; //Creates a Player Pattern for user inputs array with a limit of a 100 items.
+int PatternCtr = 0; //Holds amouunt of pattern for current level.
+
+int DisplayTimer = 0; //Holds time left for user to input pattern in milliseconds.
+
+int LightSpeedIncrement = 50;
+int StartLevel = 2;
+bool HardModeOn = false;
+
+bool PatternMatch = true;
+
+void setup() {
+  // initialize the LED pin as an output:
+  pinMode(ledPin, OUTPUT);
+  pinMode(ledPin2, OUTPUT);
+  pinMode(ledPin3, OUTPUT);
+  pinMode(ledPin4, OUTPUT);
+  // initialize the pushbutton pin as an input:
+  pinMode(buttonPin, INPUT);
+  pinMode(buttonPin2, INPUT);
+  pinMode(buttonPin3, INPUT);
+  pinMode(buttonPin4, INPUT);
+  // initialize the Buzzer pin as an output:
+  pinMode(BUZZER_PIN, OUTPUT);
+  //initialize lcd display with proper size.
+  lcd.begin(16, 2);
+
+  Serial.begin(9600);
+  
+}
+
+void loop() { 
+
+  PatternMatch = true;
+
+  //Resets Pattern and initiates Start Screen
+  if(Level == 1){
+    for(int i = 0; i<100; i++){
+      Pattern[i] = 10;      
+    }
+    PatternCtr = 0;
+    lcd.print("Press Blue: Easy");
+    lcd.setCursor(0, 1);
+    lcd.print("Press Red : Hard");
+      
+      // Waiting for user to select difficulty level
+      while(true){
+        buttonState2 = digitalRead(buttonPin2);
+        if (buttonState2 == HIGH){          
+          digitalWrite(ledPin2, HIGH);      // code for button state 2 (blue button)
+          delay(ReleaseDelay);
+          while(digitalRead(buttonPin2)){
+            
+          } 
+          digitalWrite(ledPin2, LOW);
+          delay(100);
+          HardModeOn = false;
+          break;
+
+        }else{
+          digitalWrite(ledPin2, LOW);
+        }
+        buttonState3 = digitalRead(buttonPin3);
+        if (buttonState3 == HIGH){          
+          digitalWrite(ledPin3, HIGH);      // code for button state 3 (red button)
+          delay(ReleaseDelay);
+          while(digitalRead(buttonPin3)){
+            
+          } 
+          digitalWrite(ledPin3, LOW);
+          delay(100);
+          HardModeOn = true;
+          break;
+
+        }else{
+          digitalWrite(ledPin3, LOW);
+        }
+        
+      }
+      
+      // Adjusting settings based on difficulty
+      if(HardModeOn){
+        StartLevel = 4;
+        LightSpeedIncrement = 100;
+        LightOnDelayTime -= 100;
+        LightOffDelayTime -= 100;
+      }
+      
+      // Displaying countdown before starting game
+      lcd.clear();
+      lcd.print("Starting in:");
+      lcd.setCursor(4, 1);
+      lcd.print("3");
+      tone(BUZZER_PIN,150,200);
+      delay(1000);
+      noTone(BUZZER_PIN);
+      lcd.clear();
+      lcd.print("Starting in:");
+      lcd.setCursor(4, 1);
+      lcd.print("2");
+      tone(BUZZER_PIN,250,400);
+      delay(1000);
+      noTone(BUZZER_PIN);
+      lcd.clear();
+      lcd.print("Starting in:");
+      lcd.setCursor(4, 1);
+      lcd.print("1");
+      tone(BUZZER_PIN,350,600);
+      delay(1000);
+      noTone(BUZZER_PIN);
+      lcd.clear();
+
+  }
+
+  //Resetting Player Pattern
+  for(int i =0; i<100; i++){
+    PlayerPattern[i] = 10;
+  } 
+  
+  //Generating pattern
+  for(int i = PatternCtr; i<Level+StartLevel; i++){
+    randomNumber = (rand() % 4);
+    if (randomNumber == 0){
+      Pattern[i] = 1;
+      PatternCtr++;
+      //Serial.println(Pattern[i]);
+    }else if (randomNumber == 1){
+      Pattern[i] = 2;      
+      PatternCtr++; 
+      //Serial.println(Pattern[i]);     
+    }else if (randomNumber == 2){
+      Pattern[i] = 3;
+      PatternCtr++;
+      //Serial.println(Pattern[i]);
+    }else if (randomNumber == 3){
+      Pattern[i] =4;
+      PatternCtr++;
+      //Serial.println(Pattern[i]);
+    }
+  }
+  //Displaying pattern with LED
+  for(int i = 0; i<PatternCtr; i++){
+    if (Pattern[i] == 1){
+      digitalWrite(ledPin, HIGH);
+      tone(BUZZER_PIN,150);
+      delay(LightOnDelayTime);
+      noTone(BUZZER_PIN);
+      digitalWrite(ledPin, LOW);
+      delay(LightOffDelayTime);
+    }else if (Pattern[i] == 2){
+      digitalWrite(ledPin2, HIGH);
+      tone(BUZZER_PIN,250);
+      delay(LightOnDelayTime);
+      noTone(BUZZER_PIN);
+      digitalWrite(ledPin2, LOW);
+      delay(LightOffDelayTime); 
+    }else if (Pattern[i] == 3){
+      digitalWrite(ledPin3, HIGH);
+      tone(BUZZER_PIN,350);
+      delay(LightOnDelayTime);
+      noTone(BUZZER_PIN);
+      digitalWrite(ledPin3, LOW);
+      delay(LightOffDelayTime);
+    }
+    else if (Pattern[i] == 4){
+      digitalWrite(ledPin4, HIGH);
+      tone(BUZZER_PIN,350);
+      delay(LightOnDelayTime);
+      noTone(BUZZER_PIN);
+      digitalWrite(ledPin4, LOW);
+      delay(LightOffDelayTime);
+    }
+  }
+  
+
+
+//Waits for user to input pattern with waittime as time limit.
+unsigned long startTime = millis();
+while((ButtonClickCounter < (Level+StartLevel)) && (millis() - startTime) < waitTime){
+  DisplayTimer = (waitTime-(millis() - startTime));
+  if(DisplayTimer%1000==0){
+    lcd.clear();    
+    lcd.print("Time : ");
+    lcd.print(DisplayTimer/1000);
+    lcd.print(" s");
+  }
+
+  
+
+  // read the state of the pushbutton value:
+  buttonState = digitalRead(buttonPin);
+  buttonState2 = digitalRead(buttonPin2);
+  buttonState3 = digitalRead(buttonPin3);
+  buttonState4 = digitalRead(buttonPin4);
+
+  // Begin Checking Buttons being Pushed and adding it to Inputted Pattern
+
+  if (buttonState == HIGH) {
+    PlayerPattern[ButtonClickCounter] = 1;
+    ButtonClickCounter++;    
+    // turn LED on:
+    digitalWrite(ledPin, HIGH);
+    tone(BUZZER_PIN,150);
+    delay(ReleaseDelay);
+    while(digitalRead(buttonPin)){                          //Makes Sure timer is being displayed while button is held down.
+      DisplayTimer = (waitTime-(millis() - startTime));
+  if(DisplayTimer%1000==0){
+    lcd.clear();
+    //lcd.setCursor(0, 0);
+    lcd.print("Time : ");
+    lcd.print(DisplayTimer/1000);
+    //lcd.setCursor(1, 7);
+    lcd.print(" s");
+  }
+    }
+    noTone(BUZZER_PIN);
+    digitalWrite(ledPin, LOW);
+  } else {
+    // turn LED off:
+    digitalWrite(ledPin, LOW);
+  }
+
+   if (buttonState2 == HIGH) {
+     PlayerPattern[ButtonClickCounter] = 2;
+     ButtonClickCounter++;
+    // turn LED on:
+    digitalWrite(ledPin2, HIGH);
+    tone(BUZZER_PIN,250);
+    delay(ReleaseDelay);
+    while(digitalRead(buttonPin2)){
+      DisplayTimer = (waitTime-(millis() - startTime));
+  if(DisplayTimer%1000==0){
+    lcd.clear();
+    //lcd.setCursor(0, 0);
+    lcd.print("Time : ");
+    lcd.print(DisplayTimer/1000);
+    //lcd.setCursor(1, 7);
+    lcd.print(" s");
+  }
+    }
+    noTone(BUZZER_PIN);
+    digitalWrite(ledPin2, LOW);
+  } else {
+    // turn LED off:
+    digitalWrite(ledPin2, LOW);
+  }
+
+  if (buttonState3 == HIGH) {
+    PlayerPattern[ButtonClickCounter] = 3;
+    ButtonClickCounter++;
+    // turn LED on:
+    digitalWrite(ledPin3, HIGH);
+    tone(BUZZER_PIN,350);
+    delay(ReleaseDelay);
+    while(digitalRead(buttonPin3)){
+      DisplayTimer = (waitTime-(millis() - startTime));
+  if(DisplayTimer%1000==0){
+    lcd.clear();
+    //lcd.setCursor(0, 0);
+    lcd.print("Time : ");
+    lcd.print(DisplayTimer/1000);
+    //lcd.setCursor(1, 7);
+    lcd.print(" s");
+  }
+    }
+    noTone(BUZZER_PIN);
+    digitalWrite(ledPin3, LOW);
+  } else {
+    // turn LED off:
+    digitalWrite(ledPin3, LOW);
+  }
+
+  if (buttonState4 == HIGH) {
+    PlayerPattern[ButtonClickCounter] = 4;
+    ButtonClickCounter++;    
+    // turn LED on:
+    digitalWrite(ledPin4, HIGH);
+    tone(BUZZER_PIN,150);
+    delay(ReleaseDelay);
+    while(digitalRead(buttonPin4)){
+      DisplayTimer = (waitTime-(millis() - startTime));
+  if(DisplayTimer%1000==0){
+    lcd.clear();
+    //lcd.setCursor(0, 0);
+    lcd.print("Time : ");
+    lcd.print(DisplayTimer/1000);
+    //lcd.setCursor(1, 7);
+    lcd.print(" s");
+  }
+    }
+    noTone(BUZZER_PIN);
+    digitalWrite(ledPin4, LOW);
+  } else {
+    // turn LED off:
+    digitalWrite(ledPin4, LOW);
+  }
+}
+
+// End Checking Buttons 
+  lcd.clear();
+
+//CHecks If Pattern Matches And Displays appropriate message when Player Loses
+  for (int i =0; i<100; i++){
+    if(PlayerPattern[i] != Pattern[i]){
+      PatternMatch = false;
+      lcd.print("GAME OVER!");
+      tone(BUZZER_PIN,700);
+      delay(100);
+      tone(BUZZER_PIN,600);
+      delay(100); 
+      tone(BUZZER_PIN,500);
+      delay(100); 
+      tone(BUZZER_PIN,400);
+      delay(150); 
+      tone(BUZZER_PIN,200);
+      delay(50); 
+      tone(BUZZER_PIN,100);
+      delay(750);     
+      noTone(BUZZER_PIN);
+      /*
+      Serial.print("Mismatch at ");
+      Serial.print(i);
+      Serial.println();
+      */
+      delay(1000);
+      lcd.clear();
+      Level = 0;
+      LightOnDelayTime = 2000;
+      LightOffDelayTime = 1000;
+      waitTime = 9900;
+      break;
+    }
+  }
+  
+  ButtonClickCounter = 0;//Resets button click counter
+  Level++;  //Increases Level
+  waitTime += 1000; //Adds 1 s to player timer
+
+  //Decreases Light on Light off time for leds displaying pattern after each level.
+  if(LightOnDelayTime>500){
+    LightOnDelayTime -= LightSpeedIncrement;
+  }  
+  if(LightOffDelayTime>400){
+    LightOffDelayTime -= LightSpeedIncrement;
+  }
+  
+
+  // Check if player failed or succeeded
+  //Displays Level up and new level on lcd
+  if(PatternMatch){
+    lcd.print("Level Up!!");
+    tone(BUZZER_PIN,100);
+    delay(100);
+    tone(BUZZER_PIN,200);
+    delay(100); 
+    tone(BUZZER_PIN,300);
+    delay(100); 
+    tone(BUZZER_PIN,400);
+    delay(150); 
+    tone(BUZZER_PIN,600);
+    delay(50); 
+    tone(BUZZER_PIN,700);
+    delay(750);     
+    noTone(BUZZER_PIN);
+    //delay(1000);
+    lcd.clear();
+    lcd.print("Level ");
+    lcd.print(Level);
+    lcd.setCursor(0, 1);
+    lcd.print("Starting!!");
+
+    //Blink
+    for(int i = 0;i<3;i++){
+      // Turn off the display:
+      lcd.noDisplay();
+      delay(250);
+      // Turn on the display:
+      lcd.display();
+      delay(750);
+    }
+    delay(300);
+    lcd.clear();
+  } 
+
+}
